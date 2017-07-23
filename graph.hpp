@@ -18,15 +18,17 @@ bool operator<(const Index& lhs, const Index& rhs) noexcept;
 
 bool operator==(const Index& lhs, const Index& rhs) noexcept;
 
-
-
-
 struct Vertex {
+    enum class Color {
+        uncolored, // Unvisited
+        green, // visited
+    };
+
     const int x;
     const int y;
     const double cost; // Cost to achieve this vertex, inf means not achievable
     std::set<Edge*> edges;
-    bool visited;
+    Color color = Color::uncolored;
 
     Vertex(int x, int y, double cost)
         : x{x},

@@ -15,16 +15,17 @@ SOURCES += \
     main.cpp \
     pathfindercanvas.cpp \
     adpter.cpp \
-    graph.cpp
+    graph.cpp \
+    graphicsview.cpp
 
 HEADERS += \
         mainwindow.hpp \
-    graph_base.hpp \
     pathfindercanvas.hpp \
     grid.hpp \
     random.hpp \
     adpter.hpp \
-    graph.hpp
+    graph.hpp \
+    graphicsview.hpp
 
 FORMS += \
         mainwindow.ui

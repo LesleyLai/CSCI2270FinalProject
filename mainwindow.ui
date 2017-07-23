@@ -27,16 +27,6 @@
      <string>Algorithm</string>
     </property>
    </widget>
-   <widget class="QGraphicsView" name="canvasView">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>40</y>
-      <width>512</width>
-      <height>512</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QPushButton" name="clear">
     <property name="geometry">
      <rect>

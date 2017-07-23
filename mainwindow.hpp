@@ -20,9 +20,12 @@ public:
 
 private slots:
     void on_loadWorldButton_clicked();
+    void canvas_clicked(int x, int y);
+
+    void on_clear_clicked();
 
 private:
-    std::unique_ptr<Ui::MainWindow> ui;
+    Ui::MainWindow* ui;
     std::unique_ptr<MainWindowImpl> impl_;
 };
 
