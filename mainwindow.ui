@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>527</width>
+    <height>614</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Path finder demo</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>47</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Algorithm</string>
+    </property>
+   </widget>
+   <widget class="QGraphicsView" name="canvasView">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>512</width>
+      <height>512</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="clear">
+    <property name="geometry">
+     <rect>
+      <x>466</x>
+      <y>10</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Clear</string>
+    </property>
+   </widget>
+   <widget class="QSlider" name="deltaSlide">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>11</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="comboBox">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>10</y>
+      <width>121</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>Breadth-first search</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Depth-first Search</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Dijkstra's algorithm</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>A*</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QComboBox" name="worldsCombo">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>570</y>
+      <width>171</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text">
+      <string>Terran 16x16</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Terran 32x32</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Terran 64x64</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Terran 128x128</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Terran 256x256</string>
+     </property>
+    </item>
+    <item>
+     <property name="text">
+      <string>Terran 512x512</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>122</x>
+      <y>572</y>
+      <width>31</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>World:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="loadWorldButton">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>570</y>
+      <width>91</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Generate</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="replay">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>10</y>
+      <width>51</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Replay</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>216</x>
+      <y>10</y>
+      <width>31</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delay</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
