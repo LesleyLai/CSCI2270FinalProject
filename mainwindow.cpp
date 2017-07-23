@@ -7,6 +7,7 @@
 
 #include "grid.hpp"
 #include "random.hpp"
+#include "adpter.hpp"
 
 constexpr int canvas_width = 512;
 constexpr int canvas_height = 512;
@@ -18,7 +19,6 @@ namespace {
         terran64,
         terran128,
         terran256,
-        terran512,
     };
 
     World world_from_combo(const QComboBox& world_combo) {
@@ -34,8 +34,6 @@ namespace {
             return World::terran128;
         } else if (text == "Terran 256x256") {
             return World::terran256;
-        } else if (text == "Terran 512x512") {
-            return World::terran512;
         } else {
             throw std::runtime_error {"Unknown world text"
                                       + text.toStdString()};
@@ -43,8 +41,8 @@ namespace {
     }
 
     // Generate terran with a (length, length) grid
-    Grid generate_terran(int length) {
-        Grid grid {length, length};
+    auto generate_terran(int length) {
+        Grid<double> grid {length, length};
 
         Rand_double rd(0, 1, 0);
         for (auto& elem : grid) {
@@ -58,6 +56,10 @@ namespace {
 struct MainWindowImpl {
     QGraphicsScene scene { QRect(0, 0, canvas_width, canvas_height) };
     QGraphicsPixmapItem* item = nullptr;
+
+    void draw_from_graph(const Graph& graph,
+                         int block_width,
+                         int block_height);
 };
 
 
@@ -81,7 +83,7 @@ void MainWindow::on_loadWorldButton_clicked()
 {
     World current_world = world_from_combo(*ui->worldsCombo);
 
-    Grid grid;
+    Grid<double> grid;
     switch (current_world) {
     case World::terran16:
         grid = generate_terran(16);
@@ -98,20 +100,28 @@ void MainWindow::on_loadWorldButton_clicked()
     case World::terran256:
         grid = generate_terran(256);
         break;
-    case World::terran512:
-        grid = generate_terran(512);
-        break;
     }
 
+    auto world = graph_from_grid(grid);
+
+    impl_->draw_from_graph(world, grid.width(), grid.height());
+}
+
+void MainWindowImpl::draw_from_graph(const Graph& graph,
+                                     int width,
+                                     int height)
+{
     // Draw
     QPixmap canvas {canvas_width, canvas_height};
     QPainter painter {&canvas};
 
-    const auto block_width = canvas_width / grid.width();
-    const auto block_height = canvas_height / grid.height();
-    for (auto x = 0; x != grid.width(); ++x) {
-        for (auto y = 0; y != grid.height(); ++y) {
-            auto scale = grid.at(x, y);
+    const auto block_width = canvas_width / width;
+    const auto block_height = canvas_height / height;
+
+    for (auto x = 0; x != width; ++x) {
+        for (auto y = 0; y != height; ++y) {
+            auto vertex = graph.get_vertex(x, y);
+            auto scale = vertex->cost;
             auto color = QColor {static_cast<int>(scale * 255),
                          static_cast<int>(scale * 255),
                          static_cast<int>(scale * 255)};
@@ -127,8 +137,8 @@ void MainWindow::on_loadWorldButton_clicked()
         }
     }
 
-    impl_->scene.clear();
-    impl_->item = impl_->scene.addPixmap(canvas);
+    scene.clear();
+    item = scene.addPixmap(canvas);
     //auto canvas = ui->canvas;
 
 

@@ -127,11 +127,6 @@
       <string>Terran 256x256</string>
      </property>
     </item>
-    <item>
-     <property name="text">
-      <string>Terran 512x512</string>
-     </property>
-    </item>
    </widget>
    <widget class="QLabel" name="label_2">
     <property name="geometry">

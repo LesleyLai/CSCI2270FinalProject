@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 // Grid is a 2 dimension fix-sized array
+template <typename T>
 class Grid {
 public:
     Grid() = default;
@@ -13,9 +14,9 @@ public:
     // Create a grid from width and height
     Grid(int width, int height);
 
-    int width() const;
-    int height() const;
-    int size() const;
+    int width() const { return width_; }
+    int height() const { return height_; }
+    int size() const { return width_ * height_; }
 
     // Move operations
     Grid(Grid&& other) = default;
@@ -25,12 +26,12 @@ public:
     bool inBounds(int x, int y) const;
 
     // Element access
-    const double& at(int x, int y) const;
-    double& at(int x, int y);
+    const T& at(int x, int y) const;
+    T& at(int x, int y);
 
     // Iterating support
-    double* begin();
-    double* end();
+    T* begin();
+    T* end();
 
 
 private:
@@ -39,31 +40,21 @@ private:
     int height_;
 };
 
-Grid::Grid(int width, int height)
+template <typename T>
+Grid<T>::Grid(int width, int height)
     : elems_ {std::make_unique<double[]>(static_cast<size_t>(width * height))},
       width_{width},
       height_{height} {}
 
-int Grid::width() const {
-    return width_;
-}
-
-int Grid::height() const {
-    return height_;
-}
-
-int Grid::size() const {
-    return width_ * height_;
-}
-
-bool Grid::inBounds(int x, int y) const {
+template <typename T>
+bool Grid<T>::inBounds(int x, int y) const {
     if (x < 0 || x >= width_) return false;
     if (y < 0 || y >= height_) return false;
     return true;
 }
 
-const double& Grid::at(int x, int y) const {
-
+template <typename T>
+const T& Grid<T>::at(int x, int y) const {
     if (!inBounds(x, y)) {
         auto x_s = std::to_string(x);
         auto y_s = std::to_string(y);
@@ -73,17 +64,20 @@ const double& Grid::at(int x, int y) const {
     return elems_[index];
 }
 
-double& Grid::at(int x, int y)
+template <typename T>
+T& Grid<T>::at(int x, int y)
 {
     return const_cast<double&>(static_cast<const Grid*>(this)->at(x, y));
 }
 
-double* Grid::begin()
+template <typename T>
+T* Grid<T>::begin()
 {
     return elems_.get();
 }
 
-double* Grid::end()
+template <typename T>
+T* Grid<T>::end()
 {
     return elems_.get() + size();
 }
