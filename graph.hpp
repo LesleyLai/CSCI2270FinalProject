@@ -6,28 +6,23 @@
 #include <map>
 #include <ostream>
 
+#include "type.hpp"
+
 struct Vertex;
 struct Edge;
-
-struct Index {
-    int x;
-    int y;
-};
-
-bool operator<(const Index& lhs, const Index& rhs) noexcept;
-
-bool operator==(const Index& lhs, const Index& rhs) noexcept;
 
 struct Vertex {
     enum class Color {
         uncolored, // Unvisited
         green, // visited
+        grey, // dead end
     };
 
     const int x;
     const int y;
     const double cost; // Cost to achieve this vertex, inf means not achievable
     std::set<Edge*> edges;
+    Vertex* previous = nullptr; // Vertex comes before this one
     Color color = Color::uncolored;
 
     Vertex(int x, int y, double cost)
@@ -40,6 +35,10 @@ struct Vertex {
         return out;
     }
 
+    bool visited();
+    void visit();
+
+    void reset();
 };
 
 struct Edge {
@@ -52,6 +51,8 @@ struct Edge {
         : start{start},
           end{end},
           cost{cost} {}
+
+    void reset();
 };
 
 // An undirected graph
@@ -74,6 +75,7 @@ public:
 
     void add_edge(Vertex& start, Vertex& end, double cost = 1);
 
+    void reset();
     void clear();
 
 private:

@@ -1,9 +1,27 @@
 #include "graph.hpp"
 
-namespace  {
-// Helper to add a directed edge
-std::shared_ptr<Edge> create_single_edge(Vertex& start, Vertex& end, double cost);
+bool Vertex::visited()
+{
+    return (color == Color::green || color == Color::grey);
 }
+
+void Vertex::visit()
+{
+    color = Color::green;
+}
+
+void Vertex::reset()
+{
+    previous = nullptr; // Vertex comes before this one
+    color = Color::uncolored;
+}
+
+void Edge::reset()
+{
+    cost = 1; // weight
+    visited = false;
+}
+
 
 Graph::Graph()
 {
@@ -30,10 +48,20 @@ const std::shared_ptr<Vertex> Graph::get_vertex(int x, int y) const
 
 void Graph::add_edge(Vertex& start, Vertex& end, double cost)
 {
-    auto edge = create_single_edge(start, end, cost);
-    auto reverse_edge = create_single_edge(end, start, cost);
+    auto edge = std::make_shared<Edge>(start, end, cost);
+    edge->start.edges.insert(edge.get());
     edges_.insert(edge);
-    edges_.insert(reverse_edge);
+}
+
+void Graph::reset()
+{
+    for (auto v : vertices_) {
+        v->reset();
+    }
+
+    for (auto e : edges_) {
+        e->reset();
+    }
 }
 
 void Graph::clear() {
@@ -48,12 +76,4 @@ bool operator<(const Index& lhs, const Index& rhs) noexcept {
 
 bool operator==(const Index& lhs, const Index& rhs) noexcept {
     return lhs.x == rhs.x && lhs.y == rhs.y;
-}
-
-namespace {
-std::shared_ptr<Edge> create_single_edge(Vertex& start, Vertex& end, double cost) {
-    auto edge = std::make_shared<Edge>(start, end, cost);
-    edge->start.edges.insert(edge.get());
-    return edge;
-}
 }

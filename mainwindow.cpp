@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <algorithm>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
 #include <future>
@@ -9,6 +10,7 @@
 #include "grid.hpp"
 #include "random.hpp"
 #include "adpter.hpp"
+#include "pathfinder.hpp"
 #include "graphicsview.hpp"
 
 constexpr int canvas_width = 512;
@@ -42,6 +44,23 @@ namespace {
         }
     }
 
+    Algorithm algorithm_from_combo(const QComboBox& world_combo) {
+        auto text = world_combo.currentText();
+
+        if (text == "Depth-first Search") {
+            return Algorithm::dfs;
+        } else if (text == "Breadth-first search") {
+            return Algorithm::bfs;
+        } else if (text == "Dijkstra's algorithm") {
+            return Algorithm::dijkstra;
+        } else if (text == "A*") {
+            return Algorithm::a_star;
+        } else {
+            throw std::runtime_error {"Unknown world text"
+                                      + text.toStdString()};
+        }
+    }
+
     // Generate terran with a (length, length) grid
     auto generate_terran(int length) {
         Grid<double> grid {length, length};
@@ -57,6 +76,7 @@ namespace {
 
 struct World_info {
     std::future<Graph> world_graph_handle;
+    std::unique_ptr<Graph> graph;
     int row_count;
     int column_count;
 };
@@ -64,11 +84,15 @@ struct World_info {
 struct MainWindowImpl {
     QGraphicsScene scene { QRect(0, 0, canvas_width, canvas_height) };
     QGraphicsPixmapItem* item = nullptr;
+    QGraphicsPixmapItem* path_pixmap_item = nullptr;
     QGraphicsRectItem* start_rect = nullptr;
     QGraphicsRectItem* dest_rect = nullptr;
+    Index start;
+    Index end;
     std::unique_ptr<World_info> world;
 
     void draw_grid(const Grid<double>& grid);
+    void draw_path(const Path& path);
 
     void refresh_world(int row, int column) {
         world = std::make_unique<World_info>();
@@ -76,9 +100,19 @@ struct MainWindowImpl {
         world->column_count = column;
     }
 
-    void canvas_clicked (int x, int y);
+    void canvas_clicked (int x, int y, Algorithm algorithm);
     void clear_path();
     void load_new_world(World_type world);
+
+    // Returns a reference to world graph
+    Graph& graph();
+
+    // Reture path (a vector of index) and path cost
+    Path run_path_finding(Algorithm algorithm, Index start, Index end);
+
+private:
+    // From row/column index to pixel index at center
+    Index index_to_center(Index index);
 };
 
 
@@ -104,14 +138,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_loadWorldButton_clicked()
 {
-    World_type world_type = world_from_combo(*ui->worldsCombo);
+    auto world_type = world_from_combo(*ui->worldsCombo);
     impl_->load_new_world(world_type);
 }
 
-#include <QDebug>
 void MainWindow::canvas_clicked(int x, int y)
 {
-    impl_->canvas_clicked(x, y);
+    auto algorithm = algorithm_from_combo(*ui->algorithmCombo);
+    impl_->canvas_clicked(x, y, algorithm);
 }
 
 
@@ -150,6 +184,65 @@ void MainWindowImpl::load_new_world(World_type world_type)
     });
 }
 
+Graph& MainWindowImpl::graph()
+{
+    if (world->graph) {
+        return *world->graph;
+    } else {
+        auto& graph_handle = world->world_graph_handle;
+        graph_handle.wait();
+        world->graph = std::make_unique<Graph>(graph_handle.get());
+        return *world->graph;
+    }
+}
+
+#include <iostream>
+Path MainWindowImpl::run_path_finding(Algorithm algorithm,
+                                      Index start,
+                                      Index end)
+{
+    auto world_graph = graph();
+    world_graph.reset();
+
+    auto start_vertex = world_graph.get_vertex(start.x, start.y);
+    auto end_vertex = world_graph.get_vertex(end.x, end.y);
+
+    std::vector<Vertex*> result;
+
+    switch (algorithm) {
+    case Algorithm::dfs:
+        result = depth_first_search(*start_vertex, *end_vertex);
+        break;
+    case Algorithm::bfs:
+        std::cerr << "Algorithm unsupport yet\n";
+        break;
+    case Algorithm::dijkstra:
+        std::cerr << "Algorithm unsupport yet\n";
+        break;
+    case Algorithm::a_star:\
+        std::cerr << "Algorithm unsupport yet\n";
+        break;
+    }
+
+    std::vector<Index> route;
+    double cost = 0;
+    for (auto vertex : result) {
+        route.push_back(Index{vertex->x,vertex->y});
+        cost += vertex->cost;
+    }
+    return Path {route, cost};
+}
+
+Index MainWindowImpl::index_to_center(Index index)
+{
+    const auto block_width = canvas_width / world->row_count;
+    const auto block_height = canvas_height / world->column_count;
+
+    auto x = index.x * block_width + block_width / 2;
+    auto y = index.y * block_height + block_height / 2;
+    return Index {x, y};
+}
+
 void MainWindowImpl::draw_grid(const Grid<double>& grid)
 {
     // Draw
@@ -185,7 +278,35 @@ void MainWindowImpl::draw_grid(const Grid<double>& grid)
     item = scene.addPixmap(canvas);
 }
 
-void MainWindowImpl::canvas_clicked(int x, int y) {
+void MainWindowImpl::draw_path(const Path& path)
+{
+
+    QPixmap path_pixmap {canvas_width, canvas_height};
+    path_pixmap.fill(Qt::transparent);
+
+    QPainter painter {&path_pixmap};
+    QPen red_pen {Qt::red};
+    red_pen.setWidth(2);
+    painter.setPen(red_pen);
+
+    auto route = path.route;
+    for (auto i = route.cbegin(), end = route.cend(); i != end; ++i) {
+        if (i == end - 1) break;
+        auto index1 = *i;
+        auto index2 = *(i + 1);
+        auto pixel_position_1 = index_to_center(index1);
+        auto pixel_position_2 = index_to_center(index2);
+        painter.drawLine(pixel_position_1.x, pixel_position_1.y,
+                         pixel_position_2.x, pixel_position_2.y);
+    }
+
+    if (path_pixmap_item) {
+        scene.removeItem(path_pixmap_item);
+    }
+    path_pixmap_item = scene.addPixmap(path_pixmap);
+}
+
+void MainWindowImpl::canvas_clicked(int x, int y, Algorithm algorithm) {
     if (!world) return;
     const auto width = world->row_count;
     const auto height = world->column_count;
@@ -203,15 +324,18 @@ void MainWindowImpl::canvas_clicked(int x, int y) {
 
     if (!start_rect) {
         start_rect = scene.addRect(rect, pen);
+        start = Index {row, column};
     } else if (!dest_rect) {
         dest_rect = scene.addRect(rect, pen);
+        end = Index {row, column};
+        auto path = run_path_finding(algorithm, start, end);
+        draw_path(path);
     } else {
-        scene.removeItem(start_rect);
-        scene.removeItem(dest_rect);
+        clear_path();
         start_rect = scene.addRect(rect, pen);
+        start = Index {row, column};
         dest_rect = nullptr;
     }
-
 }
 
 void MainWindowImpl::clear_path()
@@ -224,5 +348,10 @@ void MainWindowImpl::clear_path()
     if (dest_rect) {
         scene.removeItem(dest_rect);
         dest_rect = nullptr;
+    }
+
+    if (path_pixmap_item) {
+        scene.removeItem(path_pixmap_item);
+        path_pixmap_item = nullptr;
     }
 }

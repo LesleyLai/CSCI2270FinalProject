@@ -53,7 +53,7 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QComboBox" name="comboBox">
+   <widget class="QComboBox" name="algorithmCombo">
     <property name="geometry">
      <rect>
       <x>60</x>
@@ -64,12 +64,12 @@
     </property>
     <item>
      <property name="text">
-      <string>Breadth-first search</string>
+      <string>Depth-first Search</string>
      </property>
     </item>
     <item>
      <property name="text">
-      <string>Depth-first Search</string>
+      <string>Breadth-first search</string>
      </property>
     </item>
     <item>

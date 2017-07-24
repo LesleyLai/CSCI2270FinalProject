@@ -13,19 +13,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         mainwindow.cpp \
     main.cpp \
-    pathfindercanvas.cpp \
     adpter.cpp \
     graph.cpp \
-    graphicsview.cpp
+    graphicsview.cpp \
+    pathfinder.cpp
 
 HEADERS += \
         mainwindow.hpp \
-    pathfindercanvas.hpp \
     grid.hpp \
     random.hpp \
     adpter.hpp \
     graph.hpp \
-    graphicsview.hpp
+    graphicsview.hpp \
+    type.hpp \
+    pathfinder.hpp
 
 FORMS += \
         mainwindow.ui
