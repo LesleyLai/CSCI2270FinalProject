@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
+#include <future>
 
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
@@ -14,7 +15,7 @@ constexpr int canvas_width = 512;
 constexpr int canvas_height = 512;
 
 namespace {
-    enum class World {
+    enum class World_type {
         terran16,
         terran32,
         terran64,
@@ -22,19 +23,19 @@ namespace {
         terran256,
     };
 
-    World world_from_combo(const QComboBox& world_combo) {
+    World_type world_from_combo(const QComboBox& world_combo) {
         auto text = world_combo.currentText();
 
         if (text == "Terran 16x16") {
-            return World::terran16;
+            return World_type::terran16;
         } else if (text == "Terran 32x32") {
-            return World::terran32;
+            return World_type::terran32;
         } else if (text == "Terran 64x64") {
-            return World::terran64;
+            return World_type::terran64;
         } else if (text == "Terran 128x128") {
-            return World::terran128;
+            return World_type::terran128;
         } else if (text == "Terran 256x256") {
-            return World::terran256;
+            return World_type::terran256;
         } else {
             throw std::runtime_error {"Unknown world text"
                                       + text.toStdString()};
@@ -54,24 +55,30 @@ namespace {
     }
 }
 
+struct World_info {
+    std::future<Graph> world_graph_handle;
+    int row_count;
+    int column_count;
+};
+
 struct MainWindowImpl {
     QGraphicsScene scene { QRect(0, 0, canvas_width, canvas_height) };
     QGraphicsPixmapItem* item = nullptr;
     QGraphicsRectItem* start_rect = nullptr;
     QGraphicsRectItem* dest_rect = nullptr;
+    std::unique_ptr<World_info> world;
 
-    void draw_from_graph(const Graph& graph);
+    void draw_grid(const Grid<double>& grid);
 
-    int row_count;
-    int column_count;
-
-    void set_grid_dimension(int row, int column) {
-        row_count = row;
-        column_count = column;
+    void refresh_world(int row, int column) {
+        world = std::make_unique<World_info>();
+        world->row_count = row;
+        world->column_count = column;
     }
 
     void canvas_clicked (int x, int y);
     void clear_path();
+    void load_new_world(World_type world);
 };
 
 
@@ -97,35 +104,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_loadWorldButton_clicked()
 {
-    World current_world = world_from_combo(*ui->worldsCombo);
-
-    Grid<double> grid;
-    switch (current_world) {
-    case World::terran16:
-        grid = generate_terran(16);
-        impl_->set_grid_dimension(16, 16);
-        break;
-    case World::terran32:
-        grid = generate_terran(32);
-        impl_->set_grid_dimension(32, 32);
-        break;
-    case World::terran64:
-        grid = generate_terran(64);
-        impl_->set_grid_dimension(64, 64);
-        break;
-    case World::terran128:
-        grid = generate_terran(128);
-        impl_->set_grid_dimension(128, 128);
-        break;
-    case World::terran256:
-        grid = generate_terran(256);
-        impl_->set_grid_dimension(256, 256);
-        break;
-    }
-
-    auto world = graph_from_grid(grid);
-
-    impl_->draw_from_graph(world);
+    World_type world_type = world_from_combo(*ui->worldsCombo);
+    impl_->load_new_world(world_type);
 }
 
 #include <QDebug>
@@ -140,22 +120,50 @@ void MainWindow::on_clear_clicked()
     impl_->clear_path();
 }
 
+void MainWindowImpl::load_new_world(World_type world_type)
+{
+    int world_width, world_height;
+    switch (world_type) {
+    case World_type::terran16:
+        world_width = world_height = 16;
+        break;
+    case World_type::terran32:
+        world_width = world_height = 32;
+        break;
+    case World_type::terran64:
+        world_width = world_height = 64;
+        break;
+    case World_type::terran128:
+        world_width = world_height = 128;
+        break;
+    case World_type::terran256:
+        world_width = world_height = 256;
+        break;
+    }
 
-void MainWindowImpl::draw_from_graph(const Graph& graph)
+    auto grid = generate_terran(world_width);
+    refresh_world(world_width, world_height);
+    draw_grid(grid);
+
+    world->world_graph_handle = std::async(std::launch::async, [grid](){
+        return graph_from_grid(grid);
+    });
+}
+
+void MainWindowImpl::draw_grid(const Grid<double>& grid)
 {
     // Draw
     QPixmap canvas {canvas_width, canvas_height};
     QPainter painter {&canvas};
 
-    const auto width = row_count;
-    const auto height = column_count;
+    const auto width = grid.width();
+    const auto height = grid.height();
     const auto block_width = canvas_width / width;
     const auto block_height = canvas_height / height;
 
     for (auto x = 0; x != width; ++x) {
         for (auto y = 0; y != height; ++y) {
-            auto vertex = graph.get_vertex(x, y);
-            auto scale = vertex->cost;
+            auto scale = grid.at(x, y);
             auto color = QColor {static_cast<int>(scale * 255),
                          static_cast<int>(scale * 255),
                          static_cast<int>(scale * 255)};
@@ -178,9 +186,9 @@ void MainWindowImpl::draw_from_graph(const Graph& graph)
 }
 
 void MainWindowImpl::canvas_clicked(int x, int y) {
-    const auto width = row_count;
-    const auto height = column_count;
-    if (width == 0 || height == 0) return;
+    if (!world) return;
+    const auto width = world->row_count;
+    const auto height = world->column_count;
     const auto block_width = canvas_width / width;
     const auto block_height = canvas_height / height;
 
@@ -217,6 +225,4 @@ void MainWindowImpl::clear_path()
         scene.removeItem(dest_rect);
         dest_rect = nullptr;
     }
-
-
 }

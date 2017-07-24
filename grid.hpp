@@ -1,7 +1,7 @@
 #ifndef GRID_HPP
 #define GRID_HPP
 
-#include <memory>
+#include <vector>
 #include <string>
 #include <stdexcept>
 
@@ -9,6 +9,8 @@
 template <typename T>
 class Grid {
 public:
+    using iterator = typename std::vector<T>::iterator;
+
     Grid() = default;
 
     // Create a grid from width and height
@@ -18,7 +20,9 @@ public:
     int height() const { return height_; }
     int size() const { return width_ * height_; }
 
-    // Move operations
+    // Copy and move operations
+    Grid(const Grid& other) = default;
+    Grid& operator=(const Grid& other) = default;
     Grid(Grid&& other) = default;
     Grid& operator=(Grid&& other) = default;
 
@@ -30,19 +34,19 @@ public:
     T& at(int x, int y);
 
     // Iterating support
-    T* begin();
-    T* end();
+    iterator begin();
+    iterator end();
 
 
 private:
-    std::unique_ptr<double[]> elems_;
+    std::vector<T> elems_;
     int width_;
     int height_;
 };
 
 template <typename T>
 Grid<T>::Grid(int width, int height)
-    : elems_ {std::make_unique<double[]>(static_cast<size_t>(width * height))},
+    : elems_ (static_cast<size_t>(width * height)),
       width_{width},
       height_{height} {}
 
@@ -71,15 +75,15 @@ T& Grid<T>::at(int x, int y)
 }
 
 template <typename T>
-T* Grid<T>::begin()
+typename Grid<T>::iterator Grid<T>::begin()
 {
-    return elems_.get();
+    return elems_.begin();
 }
 
 template <typename T>
-T* Grid<T>::end()
+typename Grid<T>::iterator Grid<T>::end()
 {
-    return elems_.get() + size();
+    return elems_.end();
 }
 
 #endif // GRID_HPP

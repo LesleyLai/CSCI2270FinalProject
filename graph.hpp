@@ -60,6 +60,12 @@ class Graph
 public:
     Graph();
 
+    // Copy and moves
+    Graph(const Graph& graph) = default;
+    Graph& operator=(const Graph& graph) = default;
+    Graph(Graph&& graph) = default;
+    Graph& operator=(Graph&& graph) = default;
+
     // Add a vertex to the graph and return a reference to it
     std::shared_ptr<Vertex> add_vertex(int x, int y, double cost);
 
