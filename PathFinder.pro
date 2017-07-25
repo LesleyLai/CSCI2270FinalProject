@@ -26,7 +26,8 @@ HEADERS += \
     graph.hpp \
     graphicsview.hpp \
     type.hpp \
-    pathfinder.hpp
+    pathfinder.hpp \
+    priority_queue.hpp
 
 FORMS += \
         mainwindow.ui

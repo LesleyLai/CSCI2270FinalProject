@@ -65,7 +65,7 @@ namespace {
     auto generate_terran(int length) {
         Grid<double> grid {length, length};
 
-        Rand_double rd(0, 1, 0);
+        Rand_double rd(0, 1);
         for (auto& elem : grid) {
             elem = rd();
         }
@@ -85,6 +85,7 @@ struct MainWindowImpl {
     QGraphicsScene scene { QRect(0, 0, canvas_width, canvas_height) };
     QGraphicsPixmapItem* item = nullptr;
     QGraphicsPixmapItem* path_pixmap_item = nullptr;
+    QGraphicsPixmapItem* graph_color_item = nullptr;
     QGraphicsRectItem* start_rect = nullptr;
     QGraphicsRectItem* dest_rect = nullptr;
     Index start;
@@ -93,6 +94,7 @@ struct MainWindowImpl {
 
     void draw_grid(const Grid<double>& grid);
     void draw_path(const Path& path);
+    void draw_graph_color(const std::set<std::shared_ptr<Vertex>>& colored_vertices);
 
     void refresh_world(int row, int column) {
         world = std::make_unique<World_info>();
@@ -214,15 +216,17 @@ Path MainWindowImpl::run_path_finding(Algorithm algorithm,
         result = depth_first_search(*start_vertex, *end_vertex);
         break;
     case Algorithm::bfs:
-        std::cerr << "Algorithm unsupport yet\n";
+        result = breath_first_search(*start_vertex, *end_vertex);
         break;
     case Algorithm::dijkstra:
         std::cerr << "Algorithm unsupport yet\n";
         break;
-    case Algorithm::a_star:\
+    case Algorithm::a_star:
         std::cerr << "Algorithm unsupport yet\n";
         break;
     }
+
+    draw_graph_color(world_graph.vertices());
 
     std::vector<Index> route;
     double cost = 0;
@@ -245,7 +249,6 @@ Index MainWindowImpl::index_to_center(Index index)
 
 void MainWindowImpl::draw_grid(const Grid<double>& grid)
 {
-    // Draw
     QPixmap canvas {canvas_width, canvas_height};
     QPainter painter {&canvas};
 
@@ -266,8 +269,8 @@ void MainWindowImpl::draw_grid(const Grid<double>& grid)
 
             painter.fillRect(draw_x,
                              draw_y,
-                             draw_x + block_width,
-                             draw_y + block_height,
+                             block_width,
+                             block_height,
                              color);
         }
     }
@@ -304,6 +307,60 @@ void MainWindowImpl::draw_path(const Path& path)
         scene.removeItem(path_pixmap_item);
     }
     path_pixmap_item = scene.addPixmap(path_pixmap);
+}
+
+void MainWindowImpl::draw_graph_color(
+        const std::set<std::shared_ptr<Vertex>>& colored_vertices)
+{
+    QPixmap color_pixmap {canvas_width, canvas_height};
+    color_pixmap.fill(Qt::transparent);
+    QPainter painter {&color_pixmap};
+
+    const auto width = world->row_count;
+    const auto height = world->column_count;
+    const auto block_width = canvas_width / width;
+    const auto block_height = canvas_height / height;
+
+    for (auto v : colored_vertices) {
+        const auto x = v->x;
+        const auto y = v->y;
+
+        QColor color;
+        const int alpha = 200;
+
+        switch (v->color()) {
+        case Vertex::Color::uncolored:
+            color = Qt::transparent;
+
+            //throw std::runtime_error {"Trying to draw uncolored block"};
+            break;
+        case Vertex::Color::green:
+            color = QColor {0, 255, 0, alpha};
+            break;
+        case Vertex::Color::purple:
+            color = QColor {255, 0, 255, alpha};
+            break;
+        case Vertex::Color::grey:
+            color = QColor {150, 150, 150, alpha};
+            break;
+        }
+
+        const auto draw_x = x * block_width;
+        const auto draw_y = y * block_height;
+
+        painter.fillRect(draw_x,
+                         draw_y,
+                         block_width,
+                         block_height,
+                         color);
+    }
+
+    if (graph_color_item) {
+        scene.removeItem(graph_color_item);
+    }
+    graph_color_item = scene.addPixmap(color_pixmap);
+    graph_color_item->stackBefore(start_rect);
+    graph_color_item->stackBefore(dest_rect);
 }
 
 void MainWindowImpl::canvas_clicked(int x, int y, Algorithm algorithm) {
@@ -348,6 +405,11 @@ void MainWindowImpl::clear_path()
     if (dest_rect) {
         scene.removeItem(dest_rect);
         dest_rect = nullptr;
+    }
+
+    if (graph_color_item) {
+        scene.removeItem(graph_color_item);
+        graph_color_item = nullptr;
     }
 
     if (path_pixmap_item) {

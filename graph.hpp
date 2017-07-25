@@ -5,30 +5,29 @@
 #include <set>
 #include <map>
 #include <ostream>
+#include <functional>
 
 #include "type.hpp"
 
 struct Vertex;
 struct Edge;
+class Graph;
 
 struct Vertex {
     enum class Color {
         uncolored, // Unvisited
         green, // visited
         grey, // dead end
+        purple, // inside queue
     };
 
     const int x;
     const int y;
-    const double cost; // Cost to achieve this vertex, inf means not achievable
+    double cost; // Cost to achieve this vertex, inf means not achievable
     std::set<Edge*> edges;
     Vertex* previous = nullptr; // Vertex comes before this one
-    Color color = Color::uncolored;
 
-    Vertex(int x, int y, double cost)
-        : x{x},
-          y{y},
-          cost{cost} {}
+    Vertex(int x, int y, double cost, Graph& graph);
 
     friend std::ostream& operator<<(std::ostream& out, const Vertex& v) {
         out << "Vertex(" << v.x << ',' << v.y << ")";
@@ -37,17 +36,23 @@ struct Vertex {
 
     bool visited();
     void visit();
-
     void reset();
+
+    Color color() const;
+    void setColor(const Color& color);
+
+private:
+    Graph& graph_;
+    Color color_ = Color::uncolored;
 };
 
 struct Edge {
     Vertex& start;
     Vertex& end;
-    double cost = 1; // weight
+    const double cost; // Cost to cross the edge
     bool visited = false; // whether this edge has been visited before
 
-    Edge(Vertex& start, Vertex& end, double cost = 1)
+    Edge(Vertex& start, Vertex& end, double cost)
         : start{start},
           end{end},
           cost{cost} {}
@@ -78,7 +83,11 @@ public:
     void reset();
     void clear();
 
+    const std::set<std::shared_ptr<Vertex>>& vertices() const;
+
 private:
+    friend Vertex;
+
     std::set<std::shared_ptr<Vertex>> vertices_;
     std::set<std::shared_ptr<Edge>> edges_;
     std::map<Index, std::shared_ptr<Vertex>> index_map_; // A map from index to vertex

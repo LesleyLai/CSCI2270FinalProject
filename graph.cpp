@@ -1,24 +1,41 @@
 #include "graph.hpp"
 
+Vertex::Vertex(int x, int y, double cost, Graph& graph)
+    : x{x},
+      y{y},
+      cost{cost},
+      graph_{graph}
+{}
+
 bool Vertex::visited()
 {
-    return (color == Color::green || color == Color::grey);
+    return (color_ == Color::green || color_ == Color::grey);
 }
 
 void Vertex::visit()
 {
-    color = Color::green;
+    setColor(Color::green);
 }
 
 void Vertex::reset()
 {
+    cost = 1; // weight
     previous = nullptr; // Vertex comes before this one
-    color = Color::uncolored;
+    color_ = Color::uncolored;
+}
+
+Vertex::Color Vertex::color() const
+{
+    return color_;
+}
+
+void Vertex::setColor(const Color& color)
+{
+    color_ = color;
 }
 
 void Edge::reset()
 {
-    cost = 1; // weight
     visited = false;
 }
 
@@ -30,7 +47,7 @@ Graph::Graph()
 
 std::shared_ptr<Vertex> Graph::add_vertex(int x, int y, double cost)
 {
-    auto vertex = std::make_shared<Vertex>(x, y, cost);
+    auto vertex = std::make_shared<Vertex>(x, y, cost, *this);
     vertices_.insert(vertex);
     index_map_[Index{x, y}] = vertex;
     return vertex;
@@ -68,6 +85,11 @@ void Graph::clear() {
     vertices_.clear();
     edges_.clear();
     index_map_.clear();
+}
+
+const std::set<std::shared_ptr<Vertex>>& Graph::vertices() const
+{
+    return vertices_;
 }
 
 bool operator<(const Index& lhs, const Index& rhs) noexcept {
