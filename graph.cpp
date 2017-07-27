@@ -18,8 +18,8 @@ void Vertex::visit()
 }
 
 void Vertex::reset()
-{
-    cost = 1; // weight
+{    
+    cost = std::numeric_limits<double>::infinity();
     previous = nullptr; // Vertex comes before this one
     color_ = Color::uncolored;
 }

@@ -1,7 +1,5 @@
 #include <algorithm>
-#include <iostream>
 #include <queue>
-#include <limits>
 
 #include "priority_queue.hpp"
 #include "pathfinder.hpp"
@@ -55,13 +53,12 @@ std::vector<Vertex*> breath_first_search(Vertex& start, Vertex& end)
 {
     std::vector<Vertex*> path;
     Vertex_queue queue;
-    start.cost = std::numeric_limits<double>::infinity();
+    start.cost = 0;
     queue.push(&start);
     double cost; // Cache cost
 
     while (!queue.empty()) {
         Vertex* cursor = queue.top();
-        std::cout << *cursor << " " << cursor->visited() << std::endl;
         queue.pop();
         if (!cursor->visited()) cursor->visit();
         if (cursor == &end) {
@@ -73,6 +70,36 @@ std::vector<Vertex*> breath_first_search(Vertex& start, Vertex& end)
             if (!edge->end.visited() && cost < edge->end.cost) {
                 edge->visited = true;
                 enqueue_vertex(queue, &edge->end, cursor, cost);
+            }
+        }
+    }
+
+    return path;
+}
+
+std::vector<Vertex*> dijkstras_algorithm(Vertex& start, Vertex& end)
+{
+    std::vector<Vertex*> path;
+    Vertex_queue queue;
+    start.cost = 0;
+    queue.push(&start);
+    double cost; // Cache cost
+
+    while (!queue.empty()) {
+        Vertex* cursor = queue.top();
+        queue.pop();
+        if (!cursor->visited()) cursor->visit();
+        if (cursor == &end) {
+            return generate_path(&end, &start);
+        }
+
+        for (auto edge : cursor->edges) {
+            if (!edge->end.visited() ) {
+                cost = edge->cost + cursor->cost;
+                if (cost < edge->end.cost) {
+                    edge->end.cost = cost;
+                    enqueue_vertex(queue, &edge->end, cursor, cost);
+                }
             }
         }
     }
@@ -97,7 +124,6 @@ std::vector<Vertex*> generate_path(Vertex* end, Vertex* start) {
     std::vector<Vertex*> result;
     auto cursor = end;
     while (cursor != start) {
-        std::cout << *cursor << std::endl;
         result.push_back(cursor);
         cursor = cursor->previous;
     }

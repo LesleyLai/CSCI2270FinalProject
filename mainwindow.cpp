@@ -219,7 +219,7 @@ Path MainWindowImpl::run_path_finding(Algorithm algorithm,
         result = breath_first_search(*start_vertex, *end_vertex);
         break;
     case Algorithm::dijkstra:
-        std::cerr << "Algorithm unsupport yet\n";
+        result = dijkstras_algorithm(*start_vertex, *end_vertex);
         break;
     case Algorithm::a_star:
         std::cerr << "Algorithm unsupport yet\n";
